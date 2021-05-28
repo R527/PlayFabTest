@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using PlayFab.Json;
 
 public class PlayFabController : MonoBehaviour {
 
@@ -20,6 +21,16 @@ public class PlayFabController : MonoBehaviour {
 
     [SerializeField] List<ItemInstance> userInventry;
 
+    [Serializable]
+    public class ItemDate {
+
+        public string ItemId;
+        public int Power;
+        public string Type;
+        public int Gold;
+    }
+
+    public List<ItemDate> itemDateList = new List<ItemDate>();
 
     [Serializable]
     public class UserQuestData {
@@ -46,9 +57,11 @@ public class PlayFabController : MonoBehaviour {
         PlayFabAuthService.Instance.Authenticate(Authtypes.Silent);
         yield return new WaitForSeconds(3.0f);
         UpdateUserdata();
+        //UpdateCharacterDate();
         //GetUserData();
 
         btn.onClick.AddListener(InitPlayer);
+
     }
 
     private void Update() {
@@ -67,7 +80,13 @@ public class PlayFabController : MonoBehaviour {
         PlayerName = result.InfoResultPayload.UserData["Name"].Value;
         Characters = result.InfoResultPayload.CharacterList;
 
+        //itemDateList = JsonHelper.ListFromJson<ItemDate>(result.InfoResultPayload.TitleData["ItemDate"]);
+
+
         Debug.Log("Login Success!");
+
+        // タイトルデータの取得
+        itemDateList = PlayFabSimpleJson.DeserializeObject<List<ItemDate>>(result.InfoResultPayload.TitleData["ItemDate"]);
 
     }
     private void OnDisable() {
@@ -126,7 +145,24 @@ public class PlayFabController : MonoBehaviour {
     }
 
 
+    //void UpdateCharacterDate() {
 
+    //    CharacterResult characterResult = new CharacterResult();
+    //    characterResult.CharacterId = "0";
+    //    characterResult.CharacterName = "dragon";
+    //    characterResult.CharacterType = "Type";
+    //    var changes = new Dictionary<string, string> {
+    //        { "0",JsonHelper.ClassToJson(characterResult) }
+    //    };
+
+    //    PlayFabClientAPI.UpdateCharacterData(new UpdateCharacterDataRequest {
+    //        Data = changes
+    //    }, result => {
+    //        Debug.Log("Update UpdateCharacterDate Success!!");
+    //    }, error => {
+    //        Debug.Log(error.GenerateErrorReport());
+    //    });
+    //}
 
     void GetUserData() {
         PlayFabClientAPI.GetUserData(new GetUserDataRequest() {
