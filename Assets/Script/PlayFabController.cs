@@ -1,6 +1,7 @@
 ﻿using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System;
@@ -13,6 +14,9 @@ public class PlayFabController : MonoBehaviour {
     public string PlayerName;
     public List<CharacterResult> Characters;
     //public List<ItemData> ItemDatas;
+
+    [SerializeField] InputField inputName;
+    [SerializeField] Button btn;
 
     [Serializable]
     public class UserQuestData {
@@ -40,9 +44,23 @@ public class PlayFabController : MonoBehaviour {
         yield return new WaitForSeconds(3.0f);
         UpdateUserdata();
         //GetUserData();
+
+        btn.onClick.AddListener(UpdateUserTitleDisplayName);
     }
 
+    private void Update() {
+        InputValueChanged();
+    }
+
+
     private void PlayFabLogin_OnLoginSuccess(LoginResult result) {
+
+        if (result.NewlyCreated)
+            Debug.Log("新規");
+        else
+            Debug.Log("既存ユーザー");
+
+
         PlayerName = result.InfoResultPayload.UserData["Name"].Value;
         Characters = result.InfoResultPayload.CharacterList;
 
@@ -66,7 +84,45 @@ public class PlayFabController : MonoBehaviour {
     //    });
     //}
 
-    
+    #region プレイヤー表示名の更新
+    private void UpdateUserTitleDisplayName() {
+        PlayFabClientAPI.UpdateUserTitleDisplayName(new UpdateUserTitleDisplayNameRequest {
+            DisplayName = inputName.text
+        }, result => {
+            Debug.Log("PlayerName:" + result.DisplayName);
+        }, error => Debug.LogError(error.GenerateErrorReport()));
+
+        InitPlayer();
+    }
+    #endregion
+
+
+    public void InputValueChanged() {
+        btn.interactable = IsValidName();
+    }
+
+    bool IsValidName() {
+        return !string.IsNullOrWhiteSpace(inputName.text)
+            && 3 <= inputName.text.Length
+            && inputName.text.Length <= 10;
+    }
+
+    #region プレイヤーの初期化
+    void InitPlayer() {
+        var request = new UpdateUserDataRequest() {
+            Data = new Dictionary<string, string> {
+                {"Exp","0" },
+                {"Rank","1" }
+            }
+        };
+
+        PlayFabClientAPI.UpdateUserData(request
+            , result => {
+                Debug.Log("プレイヤーの初期化完了");
+            }, eroor => Debug.LogError(eroor.GenerateErrorReport()));
+    }
+    #endregion
+
 
     void GetUserData() {
         PlayFabClientAPI.GetUserData(new GetUserDataRequest() {
