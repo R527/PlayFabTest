@@ -18,6 +18,9 @@ public class PlayFabController : MonoBehaviour {
     [SerializeField] InputField inputName;
     [SerializeField] Button btn;
 
+    [SerializeField] List<ItemInstance> userInventry;
+
+
     [Serializable]
     public class UserQuestData {
         public int id;
@@ -45,7 +48,7 @@ public class PlayFabController : MonoBehaviour {
         UpdateUserdata();
         //GetUserData();
 
-        btn.onClick.AddListener(UpdateUserTitleDisplayName);
+        btn.onClick.AddListener(InitPlayer);
     }
 
     private void Update() {
@@ -92,20 +95,8 @@ public class PlayFabController : MonoBehaviour {
             Debug.Log("PlayerName:" + result.DisplayName);
         }, error => Debug.LogError(error.GenerateErrorReport()));
 
-        InitPlayer();
     }
     #endregion
-
-
-    public void InputValueChanged() {
-        btn.interactable = IsValidName();
-    }
-
-    bool IsValidName() {
-        return !string.IsNullOrWhiteSpace(inputName.text)
-            && 3 <= inputName.text.Length
-            && inputName.text.Length <= 10;
-    }
 
     #region プレイヤーの初期化
     void InitPlayer() {
@@ -119,9 +110,22 @@ public class PlayFabController : MonoBehaviour {
         PlayFabClientAPI.UpdateUserData(request
             , result => {
                 Debug.Log("プレイヤーの初期化完了");
+                UpdateUserTitleDisplayName();
             }, eroor => Debug.LogError(eroor.GenerateErrorReport()));
     }
     #endregion
+
+    public void InputValueChanged() {
+        btn.interactable = IsValidName();
+    }
+
+    bool IsValidName() {
+        return !string.IsNullOrWhiteSpace(inputName.text)
+            && 3 <= inputName.text.Length
+            && inputName.text.Length <= 10;
+    }
+
+
 
 
     void GetUserData() {
@@ -148,5 +152,20 @@ public class PlayFabController : MonoBehaviour {
             Debug.Log(error.GenerateErrorReport());
         });
     }
+
+
+    private void GetUserInventry() {
+        PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest {
+        }, (result) =>
+        {
+            userInventry = result.Inventory;
+            Debug.Log("GetUserInventory Success!!");
+        }, (error) =>
+        {
+            Debug.Log(error.GenerateErrorReport());
+        });
+    }
+
+
     
 }
