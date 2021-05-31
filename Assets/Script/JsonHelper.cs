@@ -5,6 +5,11 @@ using System;
 using System.IO;
 using System.Text;
 
+
+/// <summary>
+/// 他言語に変換するために一度文字列に置きなおす（Jsonが得意
+/// 
+/// </summary>
 public class JsonHelper {
     /// <summary>
     /// Jsonファイルをstringで読み込む
@@ -31,6 +36,7 @@ public class JsonHelper {
 
     public static List<T> ListFromJson<T>(string json) {
         var newJson = "{ \"list\": " + json + "}";
+        Debug.Log("newJoson" + newJson);
         Wrapper<T> wrapper = JsonUtility.FromJson<Wrapper<T>>(newJson);
         return wrapper.list;
     }

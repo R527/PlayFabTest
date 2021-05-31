@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using PlayFab.Json;
-
+using System.Linq;
 public class PlayFabController : MonoBehaviour {
 
     public string PlayFabId;
@@ -18,8 +18,11 @@ public class PlayFabController : MonoBehaviour {
 
     [SerializeField] InputField inputName;
     [SerializeField] Button btn;
+    [SerializeField] Button questBtn;
 
     [SerializeField] List<ItemInstance> userInventry;
+
+    [SerializeField] PlayerProfileModel playerProfileModel;
 
     [Serializable]
     public class ItemDate {
@@ -31,7 +34,7 @@ public class PlayFabController : MonoBehaviour {
     }
 
     public List<ItemDate> itemDateList = new List<ItemDate>();
-
+    public string quests;
     [Serializable]
     public class UserQuestData {
         public int id;
@@ -54,11 +57,12 @@ public class PlayFabController : MonoBehaviour {
         InfoRequestParams.GetCharacterList = true; // キャラクターの一覧を取得する
 
         PlayFabAuthService.Instance.InfoRequestParams = InfoRequestParams;
+        //PlayFabAuthService.Instance.Authenticate(Authtypes.RegisterPlayFabAccount);
         PlayFabAuthService.Instance.Authenticate(Authtypes.Silent);
         yield return new WaitForSeconds(3.0f);
-        UpdateUserdata();
+        //UpdateUserdata();
         //UpdateCharacterDate();
-        //GetUserData();
+        GetUserData();
 
         btn.onClick.AddListener(InitPlayer);
 
@@ -82,7 +86,8 @@ public class PlayFabController : MonoBehaviour {
 
         //itemDateList = JsonHelper.ListFromJson<ItemDate>(result.InfoResultPayload.TitleData["ItemDate"]);
 
-
+        bool facebookAuth = playerProfileModel.LinkedAccounts.Any(x => x.Platform == PlayFab.ClientModels.LoginIdentityProvider.Facebook);
+        Debug.Log("facebookAuth" + facebookAuth);
         Debug.Log("Login Success!");
 
         // タイトルデータの取得
@@ -112,6 +117,7 @@ public class PlayFabController : MonoBehaviour {
             DisplayName = inputName.text
         }, result => {
             Debug.Log("PlayerName:" + result.DisplayName);
+
         }, error => Debug.LogError(error.GenerateErrorReport()));
 
     }
@@ -126,10 +132,13 @@ public class PlayFabController : MonoBehaviour {
             }
         };
 
+        //コールバックを持つメソッド
         PlayFabClientAPI.UpdateUserData(request
+            //成功時
             , result => {
                 Debug.Log("プレイヤーの初期化完了");
                 UpdateUserTitleDisplayName();
+                //失敗時
             }, eroor => Debug.LogError(eroor.GenerateErrorReport()));
     }
     #endregion
@@ -167,7 +176,17 @@ public class PlayFabController : MonoBehaviour {
     void GetUserData() {
         PlayFabClientAPI.GetUserData(new GetUserDataRequest() {
         }, result => {
-            UserQuestDatas = JsonHelper.ListFromJson<UserQuestData>(result.Data["Quests"].Value);//PlayFabSimpleJson.DeserializeObject<List<UserQuestDatas>>(result.Data["Quests"].Value);
+            //UserQuestDatas = JsonHelper.ListFromJson<UserQuestData>(result.Data["Quests"].Value);//PlayFabSimpleJson.DeserializeObject<List<UserQuestDatas>>(result.Data["Quests"].Value);
+        }, error => {
+            Debug.Log(error.GenerateErrorReport());
+        });
+    }
+
+    void GetQuestsData() {
+        PlayFabClientAPI.GetTitleData(new GetTitleDataRequest() {
+
+        }, result => {
+            
         }, error => {
             Debug.Log(error.GenerateErrorReport());
         });
